@@ -1,3 +1,3 @@
 #!/bin/sh
 
-bin2int table_out id3
+bin2int table_out id50

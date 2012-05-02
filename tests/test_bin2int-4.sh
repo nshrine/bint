@@ -1,3 +1,3 @@
 #!/bin/sh
 
-bin2int final_report id3
+bin2int final_report id50
