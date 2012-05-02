@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = color-tests
 pkg_DATA = table.txt final_report.txt
-CLEANFILES = $(pkg_DATA)
+CLEANFILES = $(pkg_DATA) table* final_report* *.int
 dist_check_SCRIPTS = maketable.awk makereport.awk
 pkgdir = .
 TESTS_ENVIRONMENT = PATH=$(top_srcdir):$$PATH
