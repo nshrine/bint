@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	if (key_type == unknown)
 		error(2, 0, "%s not found", key);
 
-	fp = fopen(binfile, "r");
+	fp = fopen(binfile, "rb");
 	if (!fp)
 		error(1, errno, "%s", binfile);
 

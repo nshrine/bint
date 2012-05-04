@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 	if (!fp2)
 		error(1, errno, "%s", yfile);
 
-	FILE *fout = fopen(binfile, "w");
+	FILE *fout = fopen(binfile, "wb");
 	if (!fout)
 		error(1, errno, "%s", binfile);
 		

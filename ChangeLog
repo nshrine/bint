@@ -1,0 +1,8 @@
+2012-05-04 Nick Shrine <nrgs@users.sourceforge.net>
+
+	* int2bin.c: change fopen mode for binary file from "r" to "rb"
+	because mingw opens in text mode by default and strips CR
+	causing corruption of bin file on mingw. 
+	* illm2bin.c: as above
+	* bin2int.c: as above
+	* configure.ac: version to 0.2b
