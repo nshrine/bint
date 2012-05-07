@@ -1,3 +1,5 @@
 This NEWS file records noteworthy changes, very tersely.
 
+Version 0.2b (May 2012) - fixed mingw bug, added tests
+
 Version 0.1b (April 2012)
