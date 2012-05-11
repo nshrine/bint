@@ -67,20 +67,20 @@ int main(int argc, char *argv[])
 			case 'o':
 				setbase(optarg);
 				break;
-      		case 'v':
-        		print_version();
-        		exit(EXIT_SUCCESS);
-        		break;
-      		case 'h':
-        		print_help();
-        		exit(EXIT_SUCCESS);
-        		break;
+	  		case 'v':
+				print_version();
+				exit(EXIT_SUCCESS);
+				break;
+	  		case 'h':
+				print_help();
+				exit(EXIT_SUCCESS);
+				break;
 			case 'b':
 				snpmajor = 1;
 				break;
-      		default:
-        		break;
-      	}
+	  		default:
+				break;
+	  	}
 	}
 	if (optind == argc)
 		usage();
@@ -258,5 +258,5 @@ Copyright (C) %s Nick Shrine\n\n\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n",
-              "2012");
+		"2012");
 }

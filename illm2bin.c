@@ -97,22 +97,22 @@ int main(int argc, char *argv[])
 			case 'o':
 				setbase(optarg);
 				break;
-      		case 'v':
-        		print_version();
-        		exit(EXIT_SUCCESS);
-        		break;
-      		case 'h':
-        		print_help();
-        		exit(EXIT_SUCCESS);
-        		break;
-      		case 'c':
-        		req = cnv_col;
+	  		case 'v':
+				print_version();
+				exit(EXIT_SUCCESS);
+				break;
+	  		case 'h':
+				print_help();
+				exit(EXIT_SUCCESS);
+				break;
+	  		case 'c':
+				req = cnv_col;
 				ncol = 2;
-        		break;
-      		case 'x':
-        		req = xy_col;
+				break;
+	  		case 'x':
+				req = xy_col;
 				ncol = 2;
-        		break;
+				break;
 			case 'l':
 				req = lrr_col;
 				ncol = 1;
@@ -121,9 +121,9 @@ int main(int argc, char *argv[])
 				req = baf_col;
 				ncol = 1;
 				break;
-      		default:
-        		break;
-      	}
+	  		default:
+				break;
+	  	}
 	}
 	if (optind == argc)
 		usage();

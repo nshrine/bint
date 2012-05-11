@@ -40,8 +40,8 @@ char binfile[IDLEN], snpsfile[IDLEN], idsfile[IDLEN];
 int snpmajor;
 
 typedef struct {
-        char *id;
-        float *vals;
+	char *id;
+	float *vals;
 } indv_dat;
 
 void setbase(const char *);
