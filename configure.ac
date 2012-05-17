@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.68)
-AC_INIT([bint], [0.2b], [nrgs@users.sourceforge.net], [bint], [http://sourceforge.net/projects/bint/])
+AC_INIT([bint], [0.3b], [nrgs@users.sourceforge.net], [bint], [http://sourceforge.net/projects/bint/])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_SRCDIR([.])

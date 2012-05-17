@@ -37,11 +37,13 @@ static const struct option longopts[] =
   { "help", no_argument, NULL, 'h' },
   { "version", no_argument, NULL, 'v' },
   { "bysnp", no_argument, NULL, 'b' },
+  { "cols", required_argument, NULL, 'c' },
   { NULL, 0, NULL, 0 }
 };
 
+static int set_req_cols(const char *, req_cols *);
 static int write_names(char *, const char *);
-static int line_vals(indv_dat *, char *);
+static int line_vals(indv_dat *, char *, req_cols *);
 static void print_help();
 static void print_version();
 
@@ -59,10 +61,12 @@ int main(int argc, char *argv[])
 
 	/* Assume row per id */
 	snpmajor = 0;
+	req_cols rcols;
+	char rcolstring[10] = "";
 
 	/* Process command arguments */
 	int optc;
-	while ((optc = getopt_long(argc, argv, "o:hvb", longopts, NULL)) != -1) {
+	while ((optc = getopt_long(argc, argv, "o:hvbc:", longopts, NULL)) != -1) {
 		switch (optc) {
 			case 'o':
 				setbase(optarg);
@@ -84,6 +88,7 @@ int main(int argc, char *argv[])
 	}
 	if (optind == argc)
 		usage();
+	
 
 	FILE *fp;
 	infile = argv[optind];
@@ -125,30 +130,34 @@ int main(int argc, char *argv[])
 
 	printf("Converting intensity values to binary\n");
 	fflush(stdout);
-	unsigned int ny = 0;
+	size_t ny = 0;
 	indv_dat dat = { NULL, NULL };
 	while (getlin(&line, &n, fp) != -1) {
 
 		/* Count number of vals in first line to alloc indv_dat */
 		if (ny == 0) {
-			read = line_vals(NULL, line);
+			read = line_vals(NULL, line, NULL);
 			if (read < 1)
 				error(2, 0, "%s", "No values found");
 			if (read % nx != 0)
 				error(2, 0, "%s", "Not same number of values for each marker");
-			printf("%zu values per marker\n", read / nx);
-			dat.vals = malloc(sizeof(float) * read);
+			rcols.perkey = read / nx;
+			printf("%d values per marker\n", rcols.perkey);
+
+			/* Get the record length depending on how many cols required */
+			int reclen = set_req_cols(rcolstring, &rcols);
+			dat.vals = malloc(sizeof(float) * nx * reclen);
 			if (dat.vals == NULL)
 				error(1, errno, "%s", "dat.vals");
 		}
 
 		/* Read vals from each line */
-		read = line_vals(&dat, line);
+		read = line_vals(&dat, line, &rcols);
 		fputs(dat.id, fp2);
 		fputc('\n', fp2);
 		fwrite(dat.vals, sizeof(float), read, fout);
 		ny++;
-		printf("Read %u\r", ny);
+		printf("Read %zu\r", ny);
 		fflush(stdout);
 	}
 			
@@ -160,9 +169,36 @@ int main(int argc, char *argv[])
 	free(dat.vals);
 
 	printf("\n[ %s ]\n", binfile);
-	printf("Wrote %u ids to [ %s ]\n", ny, yfile);
+	printf("Wrote %zu ids to [ %s ]\n", ny, yfile);
 	
 	exit(EXIT_SUCCESS);
+}
+
+static int set_req_cols(const char *arg, req_cols *rcols)
+{
+	int i;
+	rcols->nreq = strlen(arg);
+	
+	if (rcols->nreq == 0) {
+		rcols->nreq = rcols->perkey;
+		for (i = 0; i < rcols->perkey; i++)
+			rcols->cols[i] = i + 1;
+	} else if (rcols->nreq > rcols->perkey) {
+		error(2, 0, "%d columns specified, only %d available",
+				rcols->nreq, rcols->perkey);
+	} else {
+		for (i = 0; i < rcols->nreq; i++) {
+			if (!isdigit(arg[i]) || arg[i] == '0')
+				error(2, 0, "Invalid column specifier: %c", arg[i]);
+			const char coli[2] = { arg[i], '\0' };
+			rcols->cols[i] = atoi(coli);
+			if (rcols->cols[i] > rcols->perkey)
+				error(2, 0, "Column %d specified, only %d available",
+						rcols->cols[i], rcols->perkey);
+		}
+	}
+
+	return rcols->nreq;
 }
 
 static int write_names(char *line, const char *file)
@@ -190,28 +226,41 @@ static int write_names(char *line, const char *file)
 	return n;
 }
 
-static int line_vals(indv_dat *dat, char *line)
+static int line_vals(indv_dat *dat, char *line, req_cols *rcols)
 {
 	char *snp, *end, *tmp;
 	if (dat == NULL) {
 		tmp = malloc((strlen(line) + 1) * sizeof(char));
 		strcpy(tmp, line);
-	} else
+	} else {
 		tmp = line;
-	int i = 0;
+	}
+
+	int i = 0, j = 0, valno, k;
 	char *id = strtok(tmp, "\t");
+	if (dat != NULL)
+		dat->id = id;
 	while ((snp = strtok(NULL, "\t")) != NULL) {
 		if (dat != NULL) {
-			dat->id = id;
-			dat->vals[i] = strtof(snp, &end);
-			if (snp == end)
-				dat->vals[i] = NAN;
+			valno = i % rcols->perkey + 1;
+			for (k = 0; k < rcols->nreq; k++) {
+				if (rcols->cols[k] == valno) {
+					dat->vals[j] = strtof(snp, &end);
+					if (snp == end)
+						dat->vals[j] = NAN;
+					j++;
+				}
+			}
 		}
 		i++;
 	}
-	if (dat == NULL)
+
+	if (dat == NULL) {
 		free(tmp);
-	return i;
+		j = i;
+	}
+
+	return j;
 }
 
 static void print_help()
@@ -227,7 +276,8 @@ Converts table of intensity values to binary.\n", stdout);
   -h, --help          display this help and exit\n\
   -v, --version       display version information and exit\n\
   -o, --out NAME      specify output filename (default %s)\n\
-  -b, --bysnp         file is snp-per-row instead of sample-per-row\n", DEFAULT_OUT);
+  -b, --bysnp         file is snp-per-row instead of sample-per-row\n\
+  -c, --cols N        specify columns to include when multiple values per id/snp\n", DEFAULT_OUT);
 
 	printf("\n");
 	fputs("\
@@ -238,7 +288,7 @@ When FILE is blank or -, read from standard input\n", stdout);
 
 	puts("\
 Examples:\n\
-  int2bin mydata lrrbaf.txt\n\n\
+  int2bin --cols 34 mydata lrrbaf.txt\n\n\
   zcat lrrbaf.txt.gz | int2bin mydata -\n");
 	puts("");
 

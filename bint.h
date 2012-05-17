@@ -44,6 +44,12 @@ typedef struct {
 	float *vals;
 } indv_dat;
 
+typedef struct {
+	int nreq;
+	int perkey;
+	int cols[4];
+} req_cols;
+
 void setbase(const char *);
 int writeheader(FILE *);
 int readheader(FILE *);
