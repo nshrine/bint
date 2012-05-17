@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
 			case 'b':
 				snpmajor = 1;
 				break;
+			case 'c':
+				strncpy(rcolstring, optarg, 10);
+				break;
 	  		default:
 				break;
 	  	}
