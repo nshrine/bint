@@ -1,8 +1,9 @@
 2012-05-17 Nick Shrine <nrgs@users.sourceforge.net>
 
 	* int2bin.c: added -c option 
-	added set_req_cols function to select required columns
-	changed line_vals to only retreive required columns
+	Added set_req_cols function to select required columns
+	Changed line_vals to only retreive required columns
+	Changed strtok delim to " \t" to work with mixed delimiter files
 	* bint.h: added struct req_cols
 	* Makefile.am: added new tests for -c option
 	* configure.ac: version to 0.3b

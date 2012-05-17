@@ -215,10 +215,10 @@ static int write_names(char *line, const char *file)
 	} else {
 
 		/* Skip the first word which will be "Sample" or "Barcode" */
-		char *name = strtok(line, "\t");
+		char *name = strtok(line, " \t");
 
-		/* Write each tab delimited name to file */
-		while ((name = strtok(NULL, "\t")) != NULL) {
+		/* Write each space/tab delimited name to file */
+		while ((name = strtok(NULL, " \t")) != NULL) {
 			fputs(name, fp);
 			fputc('\n', fp);
 			n++;
@@ -240,10 +240,10 @@ static int line_vals(indv_dat *dat, char *line, req_cols *rcols)
 	}
 
 	int i = 0, j = 0, valno, k;
-	char *id = strtok(tmp, "\t");
+	char *id = strtok(tmp, " \t");
 	if (dat != NULL)
 		dat->id = id;
-	while ((snp = strtok(NULL, "\t")) != NULL) {
+	while ((snp = strtok(NULL, " \t")) != NULL) {
 		if (dat != NULL) {
 			valno = i % rcols->perkey + 1;
 			for (k = 0; k < rcols->nreq; k++) {
