@@ -7,6 +7,6 @@ TESTS = test_int2bin-1.sh test_int2bin-2.sh test_int2bin-3.sh test_int2bin-4.sh 
 EXTRA_DIST = $(TESTS)
 
 table.txt: maketable.awk
-	(echo Barcode; for ((i=1; i<=100; i+=1)); do echo id$$i; done) | $(AWK) -f $< > $@
+	(echo Barcode; i=1; while [ $$i -lt 101 ]; do echo id$$i; i=$$((i + 1)); done) | $(AWK) -f maketable.awk > $@
 final_report.txt: makereport.awk table.txt
-	$(AWK) -f $^ > $@
+	$(AWK) -f makereport.awk table.txt > $@
