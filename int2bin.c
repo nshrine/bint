@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 
 	printf("Converting intensity values to binary\n");
 	fflush(stdout);
-	size_t ny = 0;
+	int ny = 0;
 	indv_dat dat = { NULL, NULL };
 	while (getlin(&line, &n, fp) != -1) {
 
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 		fputc('\n', fp2);
 		fwrite(dat.vals, sizeof(float), read, fout);
 		ny++;
-		printf("Read %zu\r", ny);
+		printf("Read %d\r", ny);
 		fflush(stdout);
 	}
 			
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 	free(dat.vals);
 
 	printf("\n[ %s ]\n", binfile);
-	printf("Wrote %zu ids to [ %s ]\n", ny, yfile);
+	printf("Wrote %d ids to [ %s ]\n", ny, yfile);
 	
 	exit(EXIT_SUCCESS);
 }
