@@ -164,7 +164,8 @@ int main(int argc, char *argv[])
 		fflush(stdout);
 	}
 			
-	fclose(fp);
+	if (strcmp(infile, "stdin") == 0)
+		fclose(fp);
 	fclose(fp2);
 	fclose(fout);
 

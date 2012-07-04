@@ -50,8 +50,8 @@ static const struct option longopts[] =
 };
 
 static float get_value(FILE *, long, long);
-static int keypos(FILE *, const char *, char ***, int *);
-static int valsperkey(const char *, int);
+static int keypos(FILE *, const char *, char ***, off_t *);
+static int valsperkey(const char *, size_t);
 static int linecount(FILE *);
 static void print_help();
 static void print_version();
@@ -94,7 +94,8 @@ int main(int argc, char *argv[])
 	char **snps, **ids;
 	FILE *fp;
 	enum type { unknown, snp, sample } key_type = unknown;
-	int idx, nids, nsnps;
+	off_t idx;
+	size_t nids, nsnps;
 
 	setbase(argv[optind]);
 	key = argv[optind + 1];
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
 	if (nsnps < 1)
 		error(2, 0, "No snps in %s", snpsfile);
 
-	printf("SNPs: %d\nSamples: %d\n", nsnps, nids);
+	fprintf(stderr, "SNPs: %zu\nSamples: %zu\n", nsnps, nids);
 
 	if (key_type == unknown)
 		error(2, 0, "%s not found", key);
@@ -141,14 +142,14 @@ int main(int argc, char *argv[])
 	/* Read binary file header */
 	if (!readheader(fp))
 		exit(EXIT_FAILURE);
-	printf("%s grouped by %s\n", binfile, snpmajor ? "SNP" : "sample");
+	fprintf(stderr, "%s grouped by %s\n", binfile, snpmajor ? "SNP" : "sample");
 
 	int perkey = valsperkey(binfile, nids * nsnps);
 	if (perkey == -1) 
 		exit(EXIT_FAILURE);
 	else if (perkey == 0)
 		error(2, 0, "%s", "No values read");
-	printf("values per id: %d\n", perkey);
+	fprintf(stderr, "values per id: %d\n", perkey);
 
 	long i, j, begin, end, incr, reclen, nx, ny;
 
@@ -188,10 +189,16 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	printf("Extracting to [ %s ]\n", outfile);
-	FILE *fout = fopen(outfile, "w");
-	if (!fout)
-		error(1, errno, "%s", outfile);
+	FILE *fout;
+	if (strcmp(outfile, "-") == 0) {
+		strcpy(outfile, "stdout");
+		fout = stdout;
+	} else {
+		fout = (strcmp(outfile, "-") == 0 ? stdout : fopen(outfile, "w"));
+		if (!fout)
+			error(1, errno, "%s", outfile);
+	}
+	fprintf(stderr, "Extracting to [ %s ]\n", outfile);
 
 	int k = 0;
 	float value;
@@ -209,13 +216,14 @@ int main(int argc, char *argv[])
 				fputc('\t', fout);
 		}
 		fputc('\n', fout);
-		printf("\r%2.0f%%", ((float) i / (float) end) * 100.0);
-		fflush(stdout);
+		fprintf(stderr, "\r%2.0f%%", ((float) i / (float) end) * 100.0);
+		fflush(stderr);
 	}
-	printf("\rdone\n");
+	fprintf(stderr, "\rdone\n");
 		
 	fclose(fp);
-	fclose(fout);
+	if (strcmp(outfile, "stdout") != 0)
+		fclose(fout);
 #ifdef HAVE_MMAP
 	if (munmap(map, size) == -1)
 		error(1, errno, "%s", "unmapping file");
@@ -241,7 +249,7 @@ static float get_value(FILE *fp, long i, long j)
 	return value;
 }
 
-static int keypos(FILE *fp, const char *key, char ***names, int *pos)
+static int keypos(FILE *fp, const char *key, char ***names, off_t *pos)
 {
 	int i = 0, len = 0;
 	char *line = NULL;
@@ -271,7 +279,7 @@ static int keypos(FILE *fp, const char *key, char ***names, int *pos)
 	return i;
 }
 
-static int valsperkey(const char *path, int nkey)
+static int valsperkey(const char *path, size_t nkey)
 {
 	struct stat filestat;
 	off_t valsize = nkey * sizeof(float);
@@ -316,7 +324,8 @@ Extracts intensity values from binary file.\n", stdout);
 
 	puts("");
 	fputs("\
-  -o, --out           output filename (default KEY.int)\n\
+  -o, --out           output filename (default KEY.int),\n\
+                      --out - for stdout\n\
   -h, --help          display this help and exit\n\
   -v, --version       display version information and exit\n", stdout);
 
