@@ -22,63 +22,44 @@ int main(int argc, char *argv[])
 
 	char *binfile = argv[1];
 	char *idxfile = argv[2];
+	struct stat buf;
 
 	int binfd = open(binfile, O_RDONLY);
 	if (binfd == -1)
 		error(1, errno, "%s", binfile);
-	
-	FILE *idxfp;
-	if (strcmp(idxfile, "-") == 0)
-		idxfp = stdin;
-	else
-		idxfp = fopen(idxfile, "r");
-	if (!idxfp)
-		error(1, errno, "%s", idxfile);
-	
-	struct stat buf;
 	if (fstat(binfd, &buf) == -1)
 		error(1, errno, "%s", binfile);
 	off_t size = buf.st_size;
+	
+	FILE *idxfp = fopen(idxfile, "rb");
+	if (!idxfp)
+		error(1, errno, "%s", idxfile);
+	if (stat(idxfile, &buf) == -1)
+		error(1, errno, "%s", idxfile);
+	size_t nvals = buf.st_size / sizeof(double);
 	
 	float *map = mmap(0, size, PROT_READ, MAP_SHARED, binfd, 0);
 	if (map == MAP_FAILED) {
 		error(1, errno, "Unable to memory map %s", binfile);
     }
 
-	char *line = NULL, *word, *p, *endptr;
-	size_t n, nvals, i;
-
-	getline(&line, &n, idxfp);
-	strtok(line, " ");
-	nvals = 1;
-	while (strtok(NULL, " ") != NULL)
-		nvals++;
-
-	unsigned long idx[nvals];
-	rewind(idxfp);
-	while (getline(&line, &n, idxfp) != -1) {
-		p = strchr(line, '\n');
-		if (p)
-			*p = '\0';
-
-		i = 0;
-		word = strtok(line, " ");
-		do {
-			idx[i++] = strtol(word, &endptr, base);
-			if (*endptr != '\0')
-				error(1, errno, "Invalid index: %s", word);
-		} while ((word = strtok(NULL, " ")) != NULL);
-
-		for (i = 0; i < nvals; i++)
-			printf("%f\n", map[idx[i]]);
+	double didx[nvals];
+	if (fread(&didx, sizeof(double), nvals, idxfp) != nvals)
+		error(1, errno, "%s", idxfile);
+	
+	size_t i;
+	long idx;
+	for (i = 0; i < nvals; i++) {
+		idx = (long) didx[i];
+		if (idx < 0 || idx >= size / sizeof(float)) 
+			error(2, 0, "Index %zu out of range: %ld", i, idx);
+		printf("%f\n", map[idx]);
 	}
 
-	free(line);
 	if (munmap(map, size) == -1)
 		error(1, errno, "%s", "unmapping file");
 	close(binfd);
-	if (idxfp != stdin)
-		fclose(idxfp);
+	fclose(idxfp);
 
 	exit(EXIT_SUCCESS);
 }
