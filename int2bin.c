@@ -38,6 +38,7 @@ static const struct option longopts[] =
   { "version", no_argument, NULL, 'v' },
   { "bysnp", no_argument, NULL, 'b' },
   { "cols", required_argument, NULL, 'c' },
+  { "nomagic", no_argument, NULL, 'n' },
   { NULL, 0, NULL, 0 }
 };
 
@@ -65,8 +66,9 @@ int main(int argc, char *argv[])
 	char rcolstring[10] = "";
 
 	/* Process command arguments */
+	int usemagic = 1;
 	int optc;
-	while ((optc = getopt_long(argc, argv, "o:hvbc:", longopts, NULL)) != -1) {
+	while ((optc = getopt_long(argc, argv, "o:hvbc:n", longopts, NULL)) != -1) {
 		switch (optc) {
 			case 'o':
 				setbase(optarg);
@@ -84,6 +86,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'c':
 				strncpy(rcolstring, optarg, 10);
+				break;
+			case 'n':
+				usemagic = 0;
 				break;
 	  		default:
 				break;
@@ -128,8 +133,12 @@ int main(int argc, char *argv[])
 		error(1, errno, "%s", binfile);
 		
 	/* Write the header */
-	if (!writeheader(fout))
-		exit(EXIT_FAILURE);
+	if (usemagic) {
+		if (!writeheader(fout))
+			exit(EXIT_FAILURE);
+	} else {
+		fprintf(stderr, "Writing binary file with no magic number\n");
+	}
 
 	printf("Converting intensity values to binary\n");
 	fflush(stdout);
@@ -281,7 +290,8 @@ Converts table of intensity values to binary.\n", stdout);
   -v, --version       display version information and exit\n\
   -o, --out NAME      specify output filename (default %s)\n\
   -b, --bysnp         file is snp-per-row instead of sample-per-row\n\
-  -c, --cols N        specify columns to include when multiple values per id/snp\n", DEFAULT_OUT);
+  -c, --cols N        specify columns to include when multiple values per id/snp\n\
+  -n, --nomagic       do not write a magic number to header of binary file\n", DEFAULT_OUT);
 
 	printf("\n");
 	fputs("\
