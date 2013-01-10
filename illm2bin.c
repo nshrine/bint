@@ -47,6 +47,7 @@ static const struct option longopts[] =
   { "lrr", no_argument, NULL, 'l' },
   { "baf", no_argument, NULL, 'b' },
   { "version", no_argument, NULL, 'v' },
+  { "nomagic", no_argument, NULL, 'n' },
   { NULL, 0, NULL, 0 }
 };
 
@@ -91,8 +92,9 @@ int main(int argc, char *argv[])
 		colsnps[i] = -1;
 
 	/* Process command arguments */
+	int usemagic = 1;
 	int optc;
-	while ((optc = getopt_long(argc, argv, "o:hcxlbv", longopts, NULL)) != -1) {
+	while ((optc = getopt_long(argc, argv, "o:hcxlbvn", longopts, NULL)) != -1) {
 		switch (optc) {
 			case 'o':
 				setbase(optarg);
@@ -120,6 +122,9 @@ int main(int argc, char *argv[])
 			case 'b':
 				req = baf_col;
 				ncol = 1;
+				break;
+			case 'n':
+				usemagic = 0;
 				break;
 	  		default:
 				break;
@@ -200,8 +205,12 @@ int main(int argc, char *argv[])
 		error(1, errno, "%s", binfile);
 
 	/* Write the header */
-	if (!writeheader(fout))
-		exit(EXIT_FAILURE);
+	if (usemagic) {
+		if (!writeheader(fout))
+			exit(EXIT_FAILURE);
+	} else {
+		fprintf(stderr, "Writing binary file with no magic number\n");
+	}
 
 	/* Loop through lines filling float buffer then writing to files. */
 	int j, k;
