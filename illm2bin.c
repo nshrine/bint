@@ -378,7 +378,8 @@ Converts required columns of illumina final report file to binary.\n", stdout);
   -c, --cnv           get cnv analysis columns LRR & BAF (default)\n\
   -x, --xy            get X, Y intensity columns\n\
   -l, --lrr           get LRR column only\n\
-  -b, --baf           get BAF column only\n", DEFAULT_OUT);
+  -b, --baf           get BAF column only\n\
+  -n, --nomagic       do not write a magic number to header of binary file\n", DEFAULT_OUT);
 
 	printf("\n");
 	fputs("\

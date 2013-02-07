@@ -46,6 +46,7 @@ static const struct option longopts[] =
   { "out", required_argument, NULL, 'o' },
   { "help", no_argument, NULL, 'h' },
   { "version", no_argument, NULL, 'v' },
+  { "nomagic", no_argument, NULL, 'n' },
   { NULL, 0, NULL, 0 }
 };
 
@@ -55,6 +56,8 @@ static int valsperkey(const char *, size_t);
 static int linecount(FILE *);
 static void print_help();
 static void print_version();
+
+static int offset = OFFSET;
 
 void usage()
 {
@@ -69,8 +72,9 @@ int main(int argc, char *argv[])
 	char outfile[IDLEN] = "";
 
 	/* Process command arguments */
+	int usemagic = 1;
 	int optc;
-	while ((optc = getopt_long(argc, argv, "o:hv", longopts, NULL)) != -1) {
+	while ((optc = getopt_long(argc, argv, "o:hvn", longopts, NULL)) != -1) {
 		switch (optc) {
 			case 'o':
 				strcpy(outfile, optarg);
@@ -82,6 +86,10 @@ int main(int argc, char *argv[])
 	  		case 'h':
 				print_help();
 				exit(EXIT_SUCCESS);
+				break;
+			case 'n':
+				usemagic = 0;
+				offset = 0;
 				break;
 	  		default:
 				break;
@@ -140,7 +148,7 @@ int main(int argc, char *argv[])
 		error(1, errno, "%s", binfile);
 
 	/* Read binary file header */
-	if (!readheader(fp))
+	if (usemagic && !readheader(fp))
 		exit(EXIT_FAILURE);
 	fprintf(stderr, "%s grouped by %s\n", binfile, snpmajor ? "SNP" : "sample");
 
@@ -181,7 +189,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MMAP
 	int fd = fileno(fp);
 	size_t size = nsnps * nids * perkey * sizeof(float)
-			+ OFFSET * sizeof(float);
+			+ offset * sizeof(float);
 	float *map = mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
 	if (map == MAP_FAILED) {
 		/* close(fd); */
@@ -207,7 +215,7 @@ int main(int argc, char *argv[])
 		for (j = 0; j < perkey; j++) {
 #ifdef HAVE_MMAP
 			if (map != MAP_FAILED)
-				value = map[i + j + OFFSET];
+				value = map[i + j + offset];
 			else
 #endif
 			value = get_value(fp, i, j);
@@ -239,7 +247,7 @@ int main(int argc, char *argv[])
 static float get_value(FILE *fp, long i, long j)
 {
 	float value;
-	long pos = (OFFSET + i + j) * sizeof(float);
+	long pos = (offset + i + j) * sizeof(float);
 	int ret = fseek(fp, pos, SEEK_SET);
 	if (ret == -1)
 		error(1, errno, "Error seeking %s", binfile);
@@ -290,7 +298,7 @@ static int valsperkey(const char *path, size_t nkey)
 		error(0, errno, "Unable to fstat %s", binfile);
 	} else {
 		/* Data size is file size minus header */
-		datsize = filestat.st_size - (OFFSET * sizeof(float));
+		datsize = filestat.st_size - (offset * sizeof(float));
 		rem = datsize % valsize;
 		if (rem > 0) {
 			error(0, 0, "wrong values per key in %s", binfile);
@@ -327,7 +335,8 @@ Extracts intensity values from binary file.\n", stdout);
   -o, --out           output filename (default KEY.int),\n\
                       --out - for stdout\n\
   -h, --help          display this help and exit\n\
-  -v, --version       display version information and exit\n", stdout);
+  -v, --version       display version information and exit\n\
+  -n, --nomagic       read binary file with no magic number\n", stdout);
 
 	printf("\n");
 	fputs("\
