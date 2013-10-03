@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#define IDLEN 50
+#define IDLEN 255
 #define OFFSET 2
 
 /* Random magic number to identify bint file */
