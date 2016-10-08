@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <error.h>
 #include <errno.h>
+#include <ctype.h>
 #include "bint.h"
 #include "getstrings.h"
 

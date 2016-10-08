@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
 	if (map == MAP_FAILED) {
 		/* close(fd); */
 		error(0, errno, "Unable to memory map %s", binfile);
+        fprintf(stderr, "Continuing without memory mapping\n");
 	}
 #endif
 
@@ -233,9 +234,11 @@ int main(int argc, char *argv[])
 	if (strcmp(outfile, "stdout") != 0)
 		fclose(fout);
 #ifdef HAVE_MMAP
-	if (munmap(map, size) == -1)
-		error(1, errno, "%s", "unmapping file");
-	close(fd);
+    if (map != MAP_FAILED) {
+	    if (munmap(map, size) == -1)
+		    error(1, errno, "%s", "unmapping file");
+	    close(fd);
+    }
 #endif
 
 	free(*ids);
