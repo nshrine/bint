@@ -29,7 +29,7 @@ below or Illumina final report files. When you do "make check"
 examples of these input files are created in the tests
 directory, table.txt and final_report.txt, respectively.
 
-# Progrms
+# Programs
 
 int2bin
 : takes a tab-separated text file like below and converts it
